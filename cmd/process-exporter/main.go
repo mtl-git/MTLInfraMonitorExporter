@@ -14,20 +14,23 @@ import (
 	"github.com/ncabatoff/process-exporter/config"
 	"github.com/ncabatoff/process-exporter/proc"
 	"github.com/prometheus/client_golang/prometheus"
+
+	// LoadAverage追加対応
+	"github.com/shirou/gopsutil/load"
 )
 
 func printManual() {
 	fmt.Print(`Usage:
   process-exporter [options] -config.path filename.yml
 
-or 
+or
 
   process-exporter [options] -procnames name1,...,nameN [-namemapping k1,v1,...,kN,vN]
 
 The recommended option is to use a config file, but for convenience and
 backwards compatability the -procnames/-namemapping options exist as an
 alternative.
- 
+
 The -children option (default:true) makes it so that any process that otherwise
 isn't part of its own group becomes part of the first group found (if any) when
 walking the process tree upwards.  In other words, resource usage of
@@ -37,14 +40,14 @@ as a different group name.
 Command-line process selection (procnames/namemapping):
 
   Every process not in the procnames list is ignored.  Otherwise, all processes
-  found are reported on as a group based on the process name they share. 
+  found are reported on as a group based on the process name they share.
   Here 'process name' refers to the value found in the second field of
   /proc/<pid>/stat, which is truncated at 15 chars.
 
   The -namemapping option allows assigning a group name based on a combination of
-  the process name and command line.  For example, using 
+  the process name and command line.  For example, using
 
-    -namemapping "python2,([^/]+)\.py,java,-jar\s+([^/]+).jar" 
+    -namemapping "python2,([^/]+)\.py,java,-jar\s+([^/]+).jar"
 
   will make it so that each different python2 and java -jar invocation will be
   tracked with distinct metrics.  Processes whose remapped name is absent from
@@ -190,6 +193,23 @@ var (
 		"namedprocess_namegroup_thread_minor_page_faults_total",
 		"Minor page faults for these threads",
 		[]string{"groupname", "threadname"},
+		nil)
+
+	// LoadAverage追加対応
+	Loadavg_1 = prometheus.NewDesc(
+		"namedprocess_loadavg_1",
+		"Load Average 1m",
+		nil,
+		nil)
+	Loadavg_5 = prometheus.NewDesc(
+		"namedprocess_loadavg_5",
+		"Load Average 5m",
+		nil,
+		nil)
+	Loadavg_15 = prometheus.NewDesc(
+		"namedprocess_loadavg_15",
+		"Load Average 15m",
+		nil,
 		nil)
 )
 
@@ -364,6 +384,10 @@ type (
 		scrapeErrors         int
 		scrapeProcReadErrors int
 		scrapePartialErrors  int
+		// LoadAverage追加対応
+		Loadavg_1            float64
+		Loadavg_5            float64
+		Loadavg_15           float64
 	}
 )
 
@@ -419,6 +443,10 @@ func (p *NamedProcessCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- threadIoBytesDesc
 	ch <- threadMajorPageFaultsDesc
 	ch <- threadMinorPageFaultsDesc
+	// LoadAverage追加対応
+	ch <- Loadavg_1
+	ch <- Loadavg_5
+	ch <- Loadavg_15
 }
 
 // Collect implements prometheus.Collector.
@@ -439,6 +467,13 @@ func (p *NamedProcessCollector) start() {
 func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 	permErrs, groups, err := p.Update(p.source.AllProcs())
 	p.scrapePartialErrors += permErrs.Partial
+
+	// LoadAverage追加対応
+	load, _:= load.Avg()
+	p.Loadavg_1  = load.Load1
+	p.Loadavg_5  = load.Load5
+	p.Loadavg_15 = load.Load15
+
 	if err != nil {
 		p.scrapeErrors++
 		log.Printf("error reading procs: %v", err)
@@ -513,4 +548,11 @@ func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 		prometheus.CounterValue, float64(p.scrapeProcReadErrors))
 	ch <- prometheus.MustNewConstMetric(scrapePartialErrorsDesc,
 		prometheus.CounterValue, float64(p.scrapePartialErrors))
+	// LoadAverage追加対応
+	ch <- prometheus.MustNewConstMetric(Loadavg_1,
+		prometheus.GaugeValue, float64(p.Loadavg_1))
+	ch <- prometheus.MustNewConstMetric(Loadavg_5,
+		prometheus.GaugeValue, float64(p.Loadavg_5))
+	ch <- prometheus.MustNewConstMetric(Loadavg_15,
+		prometheus.GaugeValue, float64(p.Loadavg_15))
 }
