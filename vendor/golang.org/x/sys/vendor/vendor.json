@@ -1,0 +1,55 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "RtgrLgo1t0nP4iJV93R50Vy5wzY=",
+			"path": "golang.org/x/sys/plan9",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "8w1sDHyggYcJcYkPbEvhwFmFItk=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "X+ZigPvpul0CYbbwR2w5M4Rvd2E=",
+			"path": "golang.org/x/sys/windows",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "3PrKb3g2PevB9o+pfcwonYOKKw4=",
+			"path": "golang.org/x/sys/windows/registry",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "fHE2WctMhebWQJiMSJi/wkV7nn8=",
+			"path": "golang.org/x/sys/windows/svc",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "lZi+t2ilFyYSpqL1ThwNf8ot3WQ=",
+			"path": "golang.org/x/sys/windows/svc/debug",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "dz53pQfqAnXG8HdJj+nazXN9YRw=",
+			"path": "golang.org/x/sys/windows/svc/eventlog",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		},
+		{
+			"checksumSHA1": "zSzTBRQcc0tzm35I0iGtN6YAB1E=",
+			"path": "golang.org/x/sys/windows/svc/mgr",
+			"revision": "d818ba11af4465e00c1998bd3f8a55603b422290",
+			"revisionTime": "2017-12-20T16:06:35Z"
+		}
+	],
+	"rootPath": "github.com/golang/sys"
+}
