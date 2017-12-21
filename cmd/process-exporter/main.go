@@ -219,12 +219,12 @@ var (
 	filesystemSize = prometheus.NewDesc(
 		"namedprocess_filesystem_size",
 		"filesystem_size",
-		[]string{"mountpoint"},
+		[]string{"path", "fstype"},
 		nil)
 	filesystemAvail = prometheus.NewDesc(
 		"namedprocess_filesystem_avail",
 		"filesystem_avail",
-		[]string{"mountpoint"},
+		[]string{"path", "fstype"},
 		nil)
 )
 
@@ -589,9 +589,9 @@ func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 			avail_f64, _ = strconv.ParseFloat(avail_str, 64)
 
 			ch <- prometheus.MustNewConstMetric(filesystemSize,
-				prometheus.GaugeValue, size_f64, v.Path)
+				prometheus.GaugeValue, size_f64, v.Path, v.Fstype)
 			ch <- prometheus.MustNewConstMetric(filesystemAvail,
-				prometheus.GaugeValue, avail_f64, v.Path)
+				prometheus.GaugeValue, avail_f64, v.Path, v.Fstype)
 		}
 	}
 }
