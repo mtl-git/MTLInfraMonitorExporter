@@ -17,6 +17,9 @@ import (
 
 	// LoadAverage追加対応
 	"github.com/shirou/gopsutil/load"
+	// DiskUsage追加対応
+	"github.com/shirou/gopsutil/disk"
+	"strconv"
 )
 
 func printManual() {
@@ -211,6 +214,18 @@ var (
 		"Load Average 15m",
 		nil,
 		nil)
+
+	// DiskUsage追加対応
+	filesystemSize = prometheus.NewDesc(
+		"namedprocess_filesystem_size",
+		"filesystem_size",
+		[]string{"mountpoint"},
+		nil)
+	filesystemAvail = prometheus.NewDesc(
+		"namedprocess_filesystem_avail",
+		"filesystem_avail",
+		[]string{"mountpoint"},
+		nil)
 )
 
 type (
@@ -388,6 +403,8 @@ type (
 		Loadavg_1            float64
 		Loadavg_5            float64
 		Loadavg_15           float64
+		// DiskUsage追加対応
+		filesystemState      []*disk.UsageStat
 	}
 )
 
@@ -447,6 +464,9 @@ func (p *NamedProcessCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- Loadavg_1
 	ch <- Loadavg_5
 	ch <- Loadavg_15
+	// DiskUsage追加対応
+	ch <- filesystemSize
+	ch <- filesystemAvail
 }
 
 // Collect implements prometheus.Collector.
@@ -469,10 +489,9 @@ func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 	p.scrapePartialErrors += permErrs.Partial
 
 	// LoadAverage追加対応
-	load, _:= load.Avg()
-	p.Loadavg_1  = load.Load1
-	p.Loadavg_5  = load.Load5
-	p.Loadavg_15 = load.Load15
+	p.getLoadAvg(ch)
+	// DiskUsage追加対応
+	p.filesystemState = getDiskState()
 
 	if err != nil {
 		p.scrapeErrors++
@@ -555,4 +574,44 @@ func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 		prometheus.GaugeValue, float64(p.Loadavg_5))
 	ch <- prometheus.MustNewConstMetric(Loadavg_15,
 		prometheus.GaugeValue, float64(p.Loadavg_15))
+	// DiskUsage追加対応
+	if len(p.filesystemState) > 0 {
+		for _, v := range p.filesystemState {
+			var (
+				size_str  string
+				avail_str string
+				size_f64  float64
+				avail_f64 float64
+			)
+			size_str     = strconv.FormatUint(v.Total, 10)
+			size_f64, _  = strconv.ParseFloat(size_str, 64)
+			avail_str    = strconv.FormatUint(v.Free, 10)
+			avail_f64, _ = strconv.ParseFloat(avail_str, 64)
+
+			ch <- prometheus.MustNewConstMetric(filesystemSize,
+				prometheus.GaugeValue, size_f64, v.Path)
+			ch <- prometheus.MustNewConstMetric(filesystemAvail,
+				prometheus.GaugeValue, avail_f64, v.Path)
+		}
+	}
+}
+
+// LoadAverage追加対応
+func (p *NamedProcessCollector) getLoadAvg(ch chan<- prometheus.Metric) {
+	load, _:= load.Avg()
+	p.Loadavg_1  = load.Load1
+	p.Loadavg_5  = load.Load5
+	p.Loadavg_15 = load.Load15
+}
+// DiskUsage追加対応
+func getDiskState() []*disk.UsageStat {
+	var stat []*disk.UsageStat
+	parts, _:= disk.Partitions(false)
+
+	for _, part := range parts {
+		u, _:= disk.Usage(part.Mountpoint)
+		stat = append(stat, u)
+	}
+
+	return stat
 }
